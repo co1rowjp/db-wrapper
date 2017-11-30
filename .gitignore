@@ -1,0 +1,8 @@
+*.class
+*.log
+target
+out
+project/project
+project/target
+.idea
+local_test
