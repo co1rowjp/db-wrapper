@@ -1,17 +1,15 @@
-package db_wrapper.LevelDB
+package db_wrapper.level_db
 
-import java.io.File
-import java.nio.file.Path
+import java.io.Closeable
 
-import db_wrapper.DBWrapper
-import org.iq80.leveldb.Options
+import db_wrapper.{DBFilePath, DBWrapper}
+import org.iq80.leveldb.impl.Iq80DBFactory._
+
 import scalaz.syntax.id._
-
 import scala.util.Try
 
-class LevelDBImpl(dbPath: Path) extends DBWrapper {
-  private val options = new Options()
-  private val db = org.iq80.leveldb.impl.Iq80DBFactory.factory.open(new File(dbPath.toAbsolutePath.toString), options)
+trait LevelDBImpl extends DBWrapper with LevelDBOptionsAccessible with DBFilePath with Closeable {
+  private lazy val db = factory.open(dbFilePath.jfile, options)
 
   def write[K, V](key: K, value: V)(implicit keySerializer: DBWrapper.KeySerializer[K], valueSerializer: DBWrapper.ValueSerializer[V]): Try[Unit] = {
     Try { db.put(keySerializer.getDigest(key), valueSerializer.toBytes(value)) }
@@ -21,7 +19,7 @@ class LevelDBImpl(dbPath: Path) extends DBWrapper {
     Try { keySerializer.getDigest(key) |> db.get |> valueDeserializer.fromBytes }
   }
 
-  def shutdown(): Unit = {
+  def close(): Unit = {
     db.close()
   }
 }
