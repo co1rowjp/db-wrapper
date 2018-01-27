@@ -3,11 +3,14 @@ package db_wrapper
 import java.io.Closeable
 import java.security.MessageDigest
 
+import db_wrapper.DBWrapper.{Deserializer, KeySerializer, ValueSerializer}
+
 import scala.util.Try
 
 trait DBWrapper extends Closeable {
-  def write[K, V](key: K, value: V)(implicit keySerializer: DBWrapper.KeySerializer[K], valueSerializer: DBWrapper.ValueSerializer[V]): Try[Unit]
-  def read[K, V](key: K)(implicit keySerializer: DBWrapper.KeySerializer[K], valueDeserializer: DBWrapper.Deserializer[V]): Try[V]
+  def write[K, V](key: K, value: V)(implicit keySerializer: KeySerializer[K], valueSerializer: ValueSerializer[V]): Try[Unit]
+  def read[K, V](key: K)(implicit keySerializer: KeySerializer[K], valueDeserializer: Deserializer[V]): Try[V]
+  def delete[K](key: K)(implicit keySerializer: KeySerializer[K]): Try[Unit]
 }
 
 object DBWrapper {
@@ -43,7 +46,7 @@ object DBWrapper {
   }
   object ValueSerializer {
     implicit object StringSerializer extends ValueSerializer[String] {
-      def toBytes(a: String) = a.getBytes()
+      def toBytes(a: String): Array[Byte] = a.getBytes()
     }
   }
 

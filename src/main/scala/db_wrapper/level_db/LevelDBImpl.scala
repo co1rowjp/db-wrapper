@@ -19,6 +19,10 @@ trait LevelDBImpl extends DBWrapper with LevelDBOptionsAccessible with DBFilePat
     Try { keySerializer.getDigest(key) |> db.get |> valueDeserializer.fromBytes }
   }
 
+  def delete[K](key: K)(implicit keySerializer: DBWrapper.KeySerializer[K]): Try[Unit] = {
+    Try {keySerializer.getDigest(key) |> db.delete }
+  }
+
   def close(): Unit = {
     db.close()
   }
