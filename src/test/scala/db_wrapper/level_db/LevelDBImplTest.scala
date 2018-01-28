@@ -1,49 +1,48 @@
 package db_wrapper.level_db
 
-import com.typesafe.scalalogging.LazyLogging
-import db_wrapper.DBWrapper.KeySerializer
+import java.nio.ByteBuffer
+
+import db_wrapper.DBWrapper.{Deserializer, ValueSerializer}
+import db_wrapper.{DBWrapper, DBWrapperTest}
 import org.iq80.leveldb.Options
-import org.scalatest.{BeforeAndAfter, FlatSpec}
 
 import scala.reflect.io.Path
 
-class LevelDBImplTest extends FlatSpec with BeforeAndAfter with LazyLogging {
+class LevelDBImplTest extends DBWrapperTest {
   val dbFile = Path("./work/LevelDBImplTest.db")
-
-  before {
-    dbFile.deleteRecursively()
-  }
-
-  after {
-    dbFile.deleteRecursively()
+  val dbWrapper: DBWrapper = new LevelDBImpl() {
+    val dbFilePath: Path = dbFile
+    val options = new Options()
   }
 
   "db implementation" should "run" in {
+    defaultTest(Array(("keyA", "valueA"), ("kayB", "valueB")))
+    defaultTest(Array((100L, "longValue100"), (200L, "longValue200")))
+    defaultTest(Array((100, "IntValue100"), (200, "IntValue200")))
+  }
 
-    val dbWrapper = new LevelDBImpl() {
-      val dbFilePath: Path = dbFile
-      val options = new Options()
+  "inject deserializer" should "run" in {
+    case class TestMock(i: Int, s: String)
+
+    implicit object TestMockSerializer extends ValueSerializer[TestMock] {
+      def toBytes(a: TestMock): Array[Byte] = {
+        val strBuf = a.s.getBytes("UTF-8")
+        val buf = ByteBuffer.allocate(4 + 4 + strBuf.length)
+        buf.putInt(a.i)
+        buf.putInt(strBuf.length)
+        buf.put(buf)
+        buf.array()
+      }
     }
-    def deleteTest[K](iterable: Iterable[(K, String)])(implicit keySerializer: KeySerializer[K]) {
-      dbWrapper.delete(iterable.head._1)
-      dbWrapper.read(iterable.head._1).toEither.isLeft === true
-      dbWrapper.read(iterable.tail.head._1) === iterable.tail.head._2
+    implicit object TestMockDeserializer extends Deserializer[TestMock] {
+      def fromBytes(bytes: Array[Byte]): TestMock = {
+        val buf = ByteBuffer.wrap(bytes)
+        val id = buf.getInt()
+        val len = buf.getInt()
+        val str = buf.get(new Array[Byte](len))
+        TestMock(id, str.toString)
+      }
     }
-
-    val stringKeyValues = Array(("keyA", "valueA"), ("kayB", "valueB"))
-    val longKeyValues = Array((100L, "longValue100"), (200L, "longValue200"))
-    try {
-      stringKeyValues.foreach(kv => dbWrapper.write(kv._1, kv._2))
-      longKeyValues.foreach(kv => dbWrapper.write(kv._1, kv._2))
-
-      stringKeyValues.foreach(kv => dbWrapper.read(kv._1) === kv._2)
-      longKeyValues.foreach(kv => dbWrapper.read(kv._1) === kv._2)
-
-      deleteTest(longKeyValues)
-      deleteTest(stringKeyValues)
-    } finally {
-      dbWrapper.close()
-      dbFile.deleteRecursively()
-    }
+    defaultTest(Array((1L, TestMock(1, "hoge")), (2L, TestMock(2, "fuga"))))
   }
 }

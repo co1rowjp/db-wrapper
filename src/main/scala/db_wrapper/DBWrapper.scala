@@ -39,6 +39,18 @@ object DBWrapper {
         digester.digest(ret)
       }
     }
+
+    implicit object IntSerializer extends KeySerializer[Int] {
+      override def getDigest(a: Int): Array[Byte] = {
+        val ret = new Array[Byte](4)
+        var i = 0
+        while (i < 4) {
+          ret(i) = (a >> (8 - i - 1 << 3)).toByte
+          i += 1
+        }
+        digester.digest(ret)
+      }
+    }
   }
 
   trait ValueSerializer[T] {
