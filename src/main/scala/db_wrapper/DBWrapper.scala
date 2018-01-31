@@ -5,15 +5,13 @@ import java.security.MessageDigest
 
 import db_wrapper.DBWrapper._
 
-import scala.util.Try
-
 trait DBWrapper extends Closeable {
   private val digester = MessageDigest.getInstance("SHA-1")
   def getDigest[T](a: T)(implicit valueSerializer: ValueSerializer[T]): Array[Byte] = digester.digest(valueSerializer.toBytes(a))
 
-  def write[K, V](key: K, value: V)(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]): Try[Unit]
-  def read[K, V](key: K)(implicit keySerializer: ValueSerializer[K], valueDeserializer: ValueDeserializer[V]): Try[V]
-  def delete[K](key: K)(implicit keySerializer: ValueSerializer[K]): Try[Unit]
+  def write[K, V](key: K, value: V)(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]):  Either[Throwable, Unit]
+  def read[K, V](key: K)(implicit keySerializer: ValueSerializer[K], valueDeserializer: ValueDeserializer[V]): Either[Throwable, V]
+  def delete[K](key: K)(implicit keySerializer: ValueSerializer[K]): Either[Throwable, Unit]
 }
 
 object DBWrapper {
@@ -54,7 +52,7 @@ object DBWrapper {
   }
   object ValueDeserializer {
     implicit object StringDeserializer extends ValueDeserializer[String] {
-      def fromBytes(bytes: Array[Byte]): String = bytes.toString
+      def fromBytes(bytes: Array[Byte]): String = new String(bytes)
     }
   }
 }

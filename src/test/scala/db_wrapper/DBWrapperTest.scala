@@ -21,8 +21,8 @@ trait DBWrapperTest extends FlatSpec with BeforeAndAfter with LazyLogging {
 
   def deleteTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]) {
     dbWrapper.delete(iterable.head._1)
-    dbWrapper.read(iterable.head._1).toEither.isLeft === true
-    dbWrapper.read(iterable.tail.head._1) === iterable.tail.head._2
+    assert(dbWrapper.read(iterable.head._1).isLeft === true)
+    readTestImpl((iterable.tail.head._1, iterable.tail.head._2))
   }
 
   def writeTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]) {
@@ -30,7 +30,13 @@ trait DBWrapperTest extends FlatSpec with BeforeAndAfter with LazyLogging {
   }
 
   def readTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]) {
-    iterable.foreach(kv => dbWrapper.read(kv._1) === kv._2)
+    iterable.foreach(kv => readTestImpl((kv._1, kv._2)))
+  }
+  def readTestImpl[K, V](kv: (K, V))(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]) {
+    dbWrapper.read(kv._1) match {
+      case Right(v) => assert(v === kv._2)
+      case Left(e) => assert(e === kv._2)
+    }
   }
 
   def defaultTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]) {
