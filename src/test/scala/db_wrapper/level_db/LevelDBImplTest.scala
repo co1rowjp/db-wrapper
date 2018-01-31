@@ -18,7 +18,7 @@ class LevelDBImplTest extends DBWrapperTest {
   "db implementation" should "run" in {
     defaultTest(Array(("keyA", "valueA"), ("kayB", "valueB")))
     defaultTest(Array((100L, "longValue100"), (200L, "longValue200")))
-    defaultTest(Array((100, "IntValue100"), (200, "IntValue200")))
+    defaultTest(Array((1001, "IntValue100"), (2001, "IntValue200")))
   }
 
   "inject deserializer" should "run" in {
@@ -30,7 +30,7 @@ class LevelDBImplTest extends DBWrapperTest {
         val buf = ByteBuffer.allocate(4 + 4 + strBuf.length)
         buf.putInt(a.i)
         buf.putInt(strBuf.length)
-        buf.put(buf)
+        buf.put(strBuf)
         buf.array()
       }
     }
@@ -39,8 +39,9 @@ class LevelDBImplTest extends DBWrapperTest {
         val buf = ByteBuffer.wrap(bytes)
         val id = buf.getInt()
         val len = buf.getInt()
-        val str = buf.get(new Array[Byte](len))
-        TestMock(id, str.toString)
+        val str = new Array[Byte](len)
+        buf.get(str)
+        TestMock(id, new String(str))
       }
     }
     defaultTest(Array((1L, TestMock(1, "hoge")), (2L, TestMock(2, "fuga"))))
