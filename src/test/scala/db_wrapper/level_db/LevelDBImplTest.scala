@@ -2,7 +2,7 @@ package db_wrapper.level_db
 
 import java.nio.ByteBuffer
 
-import db_wrapper.DBWrapper.{Deserializer, ValueSerializer}
+import db_wrapper.DBWrapper.{ValueDeserializer, ValueSerializer}
 import db_wrapper.{DBWrapper, DBWrapperTest}
 import org.iq80.leveldb.Options
 
@@ -34,7 +34,7 @@ class LevelDBImplTest extends DBWrapperTest {
         buf.array()
       }
     }
-    implicit object TestMockDeserializer extends Deserializer[TestMock] {
+    implicit object TestMockDeserializer extends ValueDeserializer[TestMock] {
       def fromBytes(bytes: Array[Byte]): TestMock = {
         val buf = ByteBuffer.wrap(bytes)
         val id = buf.getInt()

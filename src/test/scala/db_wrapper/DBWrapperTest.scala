@@ -1,7 +1,7 @@
 package db_wrapper
 
 import com.typesafe.scalalogging.LazyLogging
-import db_wrapper.DBWrapper.{KeySerializer, ValueSerializer}
+import db_wrapper.DBWrapper._
 import org.scalatest.{BeforeAndAfter, FlatSpec}
 
 import scala.reflect.io.Path
@@ -19,21 +19,21 @@ trait DBWrapperTest extends FlatSpec with BeforeAndAfter with LazyLogging {
     dbFile.deleteRecursively()
   }
 
-  def deleteTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: KeySerializer[K], valueSerializer: ValueSerializer[V]) {
+  def deleteTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]) {
     dbWrapper.delete(iterable.head._1)
     dbWrapper.read(iterable.head._1).toEither.isLeft === true
     dbWrapper.read(iterable.tail.head._1) === iterable.tail.head._2
   }
 
-  def writeTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: KeySerializer[K], valueSerializer: ValueSerializer[V]) {
+  def writeTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]) {
     iterable.foreach(kv => dbWrapper.write(kv._1, kv._2))
   }
 
-  def readTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: KeySerializer[K], valueSerializer: ValueSerializer[V]) {
+  def readTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]) {
     iterable.foreach(kv => dbWrapper.read(kv._1) === kv._2)
   }
 
-  def defaultTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: KeySerializer[K], valueSerializer: ValueSerializer[V]) {
+  def defaultTest[K, V](iterable: Iterable[(K, V)])(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]) {
     writeTest(iterable)
     readTest(iterable)
     deleteTest(iterable)
