@@ -2,6 +2,8 @@ package db_wrapper.level_db_jni
 
 import java.io.Closeable
 
+import db_wrapper.DBWrapper.ValueDeserializer.DefaultDeserializer
+import db_wrapper.DBWrapper.ValueSerializer.DefaultSerializer
 import db_wrapper.DBWrapper.{ValueDeserializer, ValueSerializer}
 import db_wrapper.level_db.LevelDBOptionsAccessible
 import db_wrapper.{DBFilePath, DBWrapper}
@@ -35,5 +37,13 @@ trait LevelDBJNIImpl extends DBWrapper with LevelDBOptionsAccessible with DBFile
 
   def close(): Unit = {
     db.close()
+  }
+
+  def writeSimple[K, V](key: K, value: V)(implicit keySerializer: ValueSerializer[K]): Either[Throwable, Unit] = {
+    Try { db.put(getDigest(key), DefaultSerializer.toBytes(value)) }.toEither
+  }
+
+  def readSimple[K, V](key: K)(implicit keySerializer: ValueSerializer[K]): Either[Throwable, V] = {
+    Try { getDigest(key) |> db.get |> DefaultDeserializer.fromBytes }.toEither
   }
 }
