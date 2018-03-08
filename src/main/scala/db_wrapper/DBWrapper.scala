@@ -13,13 +13,9 @@ trait DBWrapper extends Closeable {
   def write[K, V](key: K, value: V)(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]):  Either[Throwable, Unit]
   def read[K, V](key: K)(implicit keySerializer: ValueSerializer[K], valueDeserializer: ValueDeserializer[V]): Either[Throwable, V]
   def delete[K](key: K)(implicit keySerializer: ValueSerializer[K]): Either[Throwable, Unit]
-
-  def writeSimple[K, V](key: K, value: V)(implicit keySerializer: ValueSerializer[K]): Either[Throwable, Unit]
-  def readSimple[K, V](key: K)(implicit keySerializer: ValueSerializer[K]): Either[Throwable, V]
 }
 
 object DBWrapper {
-
   trait ValueSerializer[T] {
     def toBytes(a: T): Array[Byte]
   }
@@ -49,18 +45,6 @@ object DBWrapper {
     implicit object StringSerializer extends ValueSerializer[String] {
       def toBytes(a: String): Array[Byte] = a.getBytes("UTF-8")
     }
-
-    object DefaultSerializer {
-      def toBytes[T](a: T): Array[Byte] = {
-        using(new ByteArrayOutputStream()) { (bout) =>
-          using(new ObjectOutputStream(bout)) { (out) =>
-            out.writeObject(a)
-            out.flush()
-            bout.toByteArray
-          }
-        }
-      }
-    }
   }
 
   trait ValueDeserializer[T] {
@@ -75,21 +59,6 @@ object DBWrapper {
     }
     implicit object StringDeserializer extends ValueDeserializer[String] {
       def fromBytes(bytes: Array[Byte]): String = new String(bytes)
-    }
-    object DefaultDeserializer {
-      def fromBytes[T](bytes: Array[Byte]): T = {
-        using(new ObjectInputStream(new ByteArrayInputStream(bytes))) {(in) =>
-          in.readObject().asInstanceOf[T]
-        }
-      }
-    }
-  }
-
-  def using[T <: Closeable, V](r: T)(f: (T) => V): V = {
-    try {
-      f(r)
-    } finally {
-      r.close()
     }
   }
 }

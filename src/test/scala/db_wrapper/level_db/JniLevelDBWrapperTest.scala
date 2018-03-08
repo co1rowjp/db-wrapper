@@ -1,13 +1,14 @@
-package db_wrapper.level_db_jni
+package db_wrapper.level_db
 
+import db_wrapper.level_db.db_access.JniLevelDBAccessible
 import db_wrapper.{DBWrapper, DBWrapperTest}
 import org.iq80.leveldb.Options
 
 import scala.reflect.io.Path
 
-class LevelDBJNIImplTest extends DBWrapperTest {
+class JniLevelDBWrapperTest extends DBWrapperTest {
   val dbFile = Path("./work/LevelDBJniImplTest.db")
-  val dbWrapper: DBWrapper = new LevelDBJNIImpl() {
+  val dbWrapper: DBWrapper = new LevelDBWrapper() with JniLevelDBAccessible {
     val dbFilePath: Path = dbFile
     val options = new Options()
   }

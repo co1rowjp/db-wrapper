@@ -2,17 +2,14 @@ package db_wrapper.level_db
 
 import java.io.Closeable
 
-import db_wrapper.DBWrapper.ValueDeserializer.DefaultDeserializer
-import db_wrapper.DBWrapper.ValueSerializer.DefaultSerializer
-import db_wrapper.{DBFilePath, DBWrapper}
+import db_wrapper.DBWrapper
 import db_wrapper.DBWrapper._
-import org.iq80.leveldb.impl.Iq80DBFactory._
+import db_wrapper.level_db.db_access.DBAccessible
 
-import scalaz.syntax.id._
 import scala.util.Try
+import scalaz.syntax.id._
 
-trait LevelDBImpl extends DBWrapper with LevelDBOptionsAccessible with DBFilePath with Closeable {
-  private lazy val db = factory.open(dbFilePath.jfile, options)
+trait LevelDBWrapper extends DBWrapper with DBAccessible with Closeable {
 
   def write[V](value: V)(implicit valueSerializer: ValueSerializer[V]): Either[Throwable, Array[Byte]] = {
     val key = getDigest(value)
@@ -36,13 +33,5 @@ trait LevelDBImpl extends DBWrapper with LevelDBOptionsAccessible with DBFilePat
 
   def close(): Unit = {
     db.close()
-  }
-
-  def writeSimple[K, V](key: K, value: V)(implicit keySerializer: ValueSerializer[K]): Either[Throwable, Unit] = {
-    Try { db.put(getDigest(key), DefaultSerializer.toBytes(value)) }.toEither
-  }
-
-  def readSimple[K, V](key: K)(implicit keySerializer: ValueSerializer[K]): Either[Throwable, V] = {
-    Try { getDigest(key) |> db.get |> DefaultDeserializer.fromBytes }.toEither
   }
 }
