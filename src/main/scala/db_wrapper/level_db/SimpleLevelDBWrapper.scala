@@ -1,30 +1,9 @@
 package db_wrapper.level_db
 
-import java.io.Closeable
+import db_wrapper.level_db.db_access.LevelDBAccessible
+import db_wrapper.level_db.impl.SimpleLevelDBWrapperImpl
+import org.iq80.leveldb.Options
 
-import db_wrapper.DBWrapper.{ValueDeserializer, ValueSerializer}
-import db_wrapper.SimpleDBWrapper
-import db_wrapper.SimpleDBWrapper.{DefaultDeserializer, DefaultSerializer}
-import db_wrapper.level_db.db_access.DBAccessible
+import scala.reflect.io.Path
 
-import scala.util.Try
-import scalaz.syntax.id._
-
-trait SimpleLevelDBWrapper extends SimpleDBWrapper with DBAccessible with Closeable {
-
-  def write[K, V](key: K, value: V):  Either[Throwable, Unit] = {
-    Try { db.put(DefaultSerializer.toBytes(key), DefaultSerializer.toBytes(value)) }.toEither
-  }
-
-  def read[K, V](key: K)(implicit keySerializer: ValueSerializer[K], valueDeserializer: ValueDeserializer[V]):  Either[Throwable, V] = {
-    Try { DefaultSerializer.toBytes(key) |> db.get |> DefaultDeserializer.fromBytes }.toEither
-  }
-
-  def delete[K](key: K)(implicit keySerializer: ValueSerializer[K]):  Either[Throwable, Unit] = {
-    Try { DefaultSerializer.toBytes(key) |> db.delete }.toEither
-  }
-
-  def close(): Unit = {
-    db.close()
-  }
-}
+class SimpleLevelDBWrapper(protected val dbFilePath: Path, protected val options: Options) extends SimpleLevelDBWrapperImpl with LevelDBAccessible

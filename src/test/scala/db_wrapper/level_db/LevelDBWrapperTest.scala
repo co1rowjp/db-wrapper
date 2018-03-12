@@ -3,7 +3,6 @@ package db_wrapper.level_db
 import java.nio.ByteBuffer
 
 import db_wrapper.DBWrapper.{ValueDeserializer, ValueSerializer}
-import db_wrapper.level_db.db_access.LevelDBAccessible
 import db_wrapper.{DBWrapper, DBWrapperTest}
 import org.iq80.leveldb.Options
 
@@ -11,10 +10,7 @@ import scala.reflect.io.Path
 
 class LevelDBWrapperTest extends DBWrapperTest {
   val dbFile = Path("./work/LevelDBImplTest.db")
-  val dbWrapper: DBWrapper = new LevelDBWrapper() with LevelDBAccessible {
-    val dbFilePath: Path = dbFile
-    val options = new Options()
-  }
+  val dbWrapper: DBWrapper = new LevelDBWrapper(dbFile, new Options())
 
   "db implementation" should "run" in {
     defaultTest(Array(("keyA", "valueA"), ("kayB", "valueB")))

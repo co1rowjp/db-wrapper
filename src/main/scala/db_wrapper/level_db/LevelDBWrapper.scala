@@ -1,37 +1,9 @@
 package db_wrapper.level_db
 
-import java.io.Closeable
+import scala.reflect.io.Path
 
-import db_wrapper.DBWrapper
-import db_wrapper.DBWrapper._
-import db_wrapper.level_db.db_access.DBAccessible
+import db_wrapper.level_db.db_access.LevelDBAccessible
+import db_wrapper.level_db.impl.LevelDBWrapperImpl
+import org.iq80.leveldb.Options
 
-import scala.util.Try
-import scalaz.syntax.id._
-
-trait LevelDBWrapper extends DBWrapper with DBAccessible with Closeable {
-
-  def write[V](value: V)(implicit valueSerializer: ValueSerializer[V]): Either[Throwable, Array[Byte]] = {
-    val key = getDigest(value)
-    Try {
-      db.put(key, valueSerializer.toBytes(value))
-      key
-    }.toEither
-  }
-
-  def write[K, V](key: K, value: V)(implicit keySerializer: ValueSerializer[K], valueSerializer: ValueSerializer[V]):  Either[Throwable, Unit] = {
-    Try { db.put(getDigest(key), valueSerializer.toBytes(value)) }.toEither
-  }
-
-  def read[K, V](key: K)(implicit keySerializer: ValueSerializer[K], valueDeserializer: ValueDeserializer[V]):  Either[Throwable, V] = {
-    Try { getDigest(key) |> db.get |> valueDeserializer.fromBytes }.toEither
-  }
-
-  def delete[K](key: K)(implicit keySerializer: ValueSerializer[K]):  Either[Throwable, Unit] = {
-    Try { getDigest(key) |> db.delete }.toEither
-  }
-
-  def close(): Unit = {
-    db.close()
-  }
-}
+class LevelDBWrapper(protected val dbFilePath: Path, protected val options: Options) extends LevelDBWrapperImpl with LevelDBAccessible
