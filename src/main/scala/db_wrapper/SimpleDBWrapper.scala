@@ -2,7 +2,7 @@ package db_wrapper
 
 import java.io._
 
-trait SimpleDBWrapper {
+trait SimpleDBWrapper extends Closeable {
   def write[K, V](key: K, value: V): Either[Throwable, Unit]
 
   def read[K, V](key: K): Either[Throwable, V]

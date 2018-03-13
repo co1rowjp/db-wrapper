@@ -17,7 +17,7 @@ trait SimpleLevelDBWrapperImpl extends SimpleDBWrapper with DBAccessible with Cl
   }
 
   def read[K, V](key: K): Either[Throwable, V] = {
-    Try { DefaultSerializer.toBytes(key) |> db.get |> DefaultDeserializer.fromBytes }.toEither
+    Try { DefaultSerializer.toBytes(key) |> db.get |> DefaultDeserializer.fromBytes[V] }.toEither
   }
 
   def delete[K](key: K): Either[Throwable, Unit] = {
